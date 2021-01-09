@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Calendar matcher</title>
+</head>
+<body>
+<form id="form" onsubmit="event.preventDefault(); showAvailableSlots()">
+    <div>
+        <label style="display: block;">Alege perioada ședinței:</label>
+        <input type="datetime-local" id="start" required />
+        <input type="datetime-local" id="end" required />
+    </div>
+
+    <div>
+        <label style="display: block;">Alege durata ședinței:</label>
+        <input type="number" id="duration" required />
+    </div>
+
+    <div>
+        <label style="display: block;">Alege participanții:</label>
+        <select id="participants" multiple required>
+            <option value="John">John</option>
+            <option value="Michael">Michael</option>
+        </select>
+    </div>
+
+    <div>
+        <button id="show" type="submit">Arată</button>
+    </div>
+</form>
+
+<div id="freeSlots"></div>
+</body>
+
+<script>
+    function showAvailableSlots() {
+        const start = new Date(document.getElementById('start').value).toISOString()
+        const end = new Date(document.getElementById('end').value).toISOString()
+        const duration = document.getElementById('duration').value
+        const participants = [...document.getElementById('participants').options].filter(option => option.selected).map(option => option.value)
+
+        fetch('http://localhost:3000/free-slots', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                start,
+                end,
+                duration,
+                participants,
+            }),
+        }).then(response => response.json())
+                .then(response => {
+                    let body = '<h3>Intervale disponibile:</h3>'
+                    response.forEach(slot => {
+                        const start = new Date(slot[0])
+                        const end = new Date(slot[1])
+
+                        body += `<p>${start.toLocaleDateString()} ${start.toLocaleTimeString()} - ${end.toLocaleDateString()} ${end.toLocaleTimeString()}</p>`
+                    })
+                    document.getElementById('freeSlots').innerHTML = body
+                })
+    }
+</script>
+</html>

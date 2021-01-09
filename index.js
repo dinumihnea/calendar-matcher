@@ -1,16 +1,26 @@
 const mergeRanges = require("./scripts/mergeRanges")
 const getFreeSlots = require("./scripts/getFreeSlots")
+const { mockMap1 } = require("./mocks");
+const express = require('express')
+const bodyParser = require('body-parser');
+const app = express()
+const port = 3000
+const path = require('path');
 
-const { mockMap1, mockMap2 } = require("./mocks");
+app.use(bodyParser.json());
 
-const input = {
-  start: new Date(2020, 11, 6, 10, 0),
-  end: new Date(2020, 11, 6, 18, 30),
-  duration: 30 * 60 * 1000
-}
+app.get('/', function(req, res) {
+  res.sendFile(path.join(__dirname + '/index.html'));
+});
 
-const mergedRanges = mergeRanges(mockMap1)
-// const mergedRanges = mergeEntries(mockMap2)
+app.post('/free-slots', (req, res) => {
+  const data = new Map();
+  req.body.participants.forEach(participant => {
+    data.set(participant, mockMap1.get(participant))
+  });
+  const mergedRanges = mergeRanges(data)
+  const freeSlots = getFreeSlots(mergedRanges, new Date(req.body.start), new Date(req.body.end), +req.body.duration)
+  res.send(freeSlots)
+})
 
-const freeSlots = getFreeSlots(mergedRanges, input.start, input.end, input.duration)
-console.log({ freeSlots })
+app.listen(port, () => {})
