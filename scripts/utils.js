@@ -93,3 +93,15 @@ module.exports.isIntersected = function (source, target) {
 
   return false;
 }
+
+/**
+ *
+ * @param d1 {Date}
+ * @param d2 {Date}
+ *  * @returns {boolean} true if d1 hase the same date as d2
+ */
+module.exports.isSameDate = function (d1, d2) {
+  return d1.getFullYear() === d2.getFullYear()
+    && d1.getMonth() === d2.getMonth()
+    && d1.getDate() === d2.getDate()
+}

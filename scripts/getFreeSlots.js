@@ -15,6 +15,10 @@ const utils = require("./utils");
 module.exports = function getFreeSlots(ranges, start, end, duration) {
   const outputInterval = [];
 
+  if (!ranges.length) {
+    return [];
+  }
+
   let prev = start;
   for (let i = 0; i < ranges.length; i++) {
     const entry = ranges[i];

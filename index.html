@@ -5,28 +5,31 @@
     <title>Calendar matcher</title>
 </head>
 <body>
-<form id="form" onsubmit="event.preventDefault(); showAvailableSlots()">
+<form id="form" onsubmit="showAvailableSlots(event)">
     <div>
-        <label style="display: block;">Alege perioada ședinței:</label>
+        <label style="display: block;" for="start">Pick up the interval when you are available:</label>
         <input type="datetime-local" id="start" required />
         <input type="datetime-local" id="end" required />
     </div>
 
     <div>
-        <label style="display: block;">Alege durata ședinței:</label>
+        <label style="display: block;" for="duration">Type the event duration (minutes):</label>
         <input type="number" id="duration" required />
     </div>
 
     <div>
-        <label style="display: block;">Alege participanții:</label>
+        <label style="display: block;" for="participants">Choose participants:</label>
         <select id="participants" multiple required>
             <option value="John">John</option>
             <option value="Michael">Michael</option>
+            <!--<option value="Jack">Jack</option>-->
         </select>
     </div>
 
+    <div id="error" style="color: #db2835"></div>
+
     <div>
-        <button id="show" type="submit">Arată</button>
+        <button id="show" type="submit">Search free slots</button>
     </div>
 </form>
 
@@ -34,12 +37,44 @@
 </body>
 
 <script>
-    function showAvailableSlots() {
+    function validate() {
+      const start = new Date(document.getElementById('start').value)
+      const end = new Date(document.getElementById('end').value)
+      const duration = document.getElementById('duration').value
+      const errorElement = document.getElementById('error')
+      if (start.getFullYear() !== end.getFullYear() ||
+        start.getMonth() !== end.getMonth() ||
+        start.getDate() !== end.getDate()) {
+        errorElement.innerText = 'Start and end should be with the same day'
+        return false;
+       } else if (start > end) {
+        errorElement.innerText = 'End date should be after the start date';
+        return false;
+      } else if (end.getTime() - start.getTime() < duration * 60 * 1000) {
+        errorElement.innerText = 'Difference between start and end should be grater than the duration';
+        return false;
+      } else if (duration <= 0) {
+        errorElement.innerText = 'Duration should be a positive number';
+        return false;
+      }
+      errorElement.innerText = null;
+      return true;
+    }
+
+    function showAvailableSlots(event) {
+        event.preventDefault();
+
+        if (!validate()) {
+          return;
+        }
+
         const start = new Date(document.getElementById('start').value).toISOString()
         const end = new Date(document.getElementById('end').value).toISOString()
         const duration = document.getElementById('duration').value
         const participants = [...document.getElementById('participants').options].filter(option => option.selected).map(option => option.value)
+        const resultElement = document.getElementById('freeSlots');
 
+        resultElement.innerText = null;
         fetch('http://localhost:3000/free-slots', {
             method: 'POST',
             headers: {
@@ -53,14 +88,18 @@
             }),
         }).then(response => response.json())
                 .then(response => {
-                    let body = '<h3>Intervale disponibile:</h3>'
+                    if (!response.length) {
+                      resultElement.innerHTML = '<h5>No free slots found</h5>'
+                      return;
+                    }
+                    let body = '<h3>Free slots:</h3>'
                     response.forEach(slot => {
                         const start = new Date(slot[0])
                         const end = new Date(slot[1])
 
                         body += `<p>${start.toLocaleDateString()} ${start.toLocaleTimeString()} - ${end.toLocaleDateString()} ${end.toLocaleTimeString()}</p>`
                     })
-                    document.getElementById('freeSlots').innerHTML = body
+                    resultElement.innerHTML = body
                 })
     }
 </script>
